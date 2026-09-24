@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Spidy AI</title>
+    <meta name="description" content="Spidy — a witty, roast-happy voice companion." />
+    <link rel="icon" href="/spidy.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true">
+      <div class="glow glow-red"></div>
+      <div class="glow glow-blue"></div>
+      <div class="web-bg"></div>
+      <div class="skyline"></div>
+    </div>
+
+    <main class="stage">
+      <header class="stage-header">
+        <img class="mark" src="/spidy.svg" alt="" aria-hidden="true" />
+        <span class="mark-name">Spidy</span>
+        <button id="loginLink" class="login-link" type="button">Log in / Sign up</button>
+        <button id="settingsToggle" class="icon-btn" type="button" aria-label="Settings">⚙</button>
+      </header>
+
+      <div class="orb-wrap">
+        <button id="orbButton" class="orb-button" type="button" aria-label="Tap to talk">
+          <canvas id="orbCanvas" width="320" height="320"></canvas>
+          <img class="orb-mark" src="/spidy.svg" alt="" aria-hidden="true" />
+        </button>
+        <p id="statusText" class="status-text">Waking up…</p>
+      </div>
+
+      <div id="transcript" class="transcript" aria-live="polite">
+        <p id="transcriptUser" class="line line-user" hidden></p>
+        <p id="transcriptAi" class="line line-ai" hidden></p>
+      </div>
+
+      <button id="fallbackToggle" class="text-fallback-toggle" type="button">Type instead</button>
+      <form id="fallbackForm" class="fallback-form" hidden>
+        <input id="fallbackInput" type="text" placeholder="Type a message…" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </main>
+
+    <aside id="settingsPanel" class="settings-panel" aria-hidden="true">
+      <h2>Settings</h2>
+      <p class="login-state">Signed in as <span id="loginState">Guest</span></p>
+      <fieldset id="voiceChoice" class="voice-choice">
+        <legend>Spidy Voice</legend>
+        <label>
+          <input type="radio" name="spidyVoice" value="female" checked />
+          Female
+        </label>
+        <label>
+          <input type="radio" name="spidyVoice" value="male" />
+          Male
+        </label>
+      </fieldset>
+      <div id="authSection" class="auth-section">
+        <form id="authForm" class="auth-form">
+          <label>
+            Email
+            <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+          </label>
+          <div id="authExtraFields" hidden>
+            <label>
+              Nickname
+              <input id="authNickname" type="text" maxlength="40" placeholder="What should Spidy call you?" />
+            </label>
+            <fieldset class="gender-choice">
+              <legend>Gender</legend>
+              <label><input type="radio" name="authGender" value="male" /> Male</label>
+              <label><input type="radio" name="authGender" value="female" /> Female</label>
+              <label><input type="radio" name="authGender" value="neutral" /> Neutral</label>
+            </fieldset>
+          </div>
+          <p id="authError" class="auth-error" hidden></p>
+          <button id="authSubmit" class="primary-btn auth-submit" type="submit">Continue</button>
+        </form>
+      </div>
+      <button id="logoutBtn" class="ghost-btn" type="button" hidden>Log out</button>
+      <button id="newSessionBtn" class="ghost-btn" type="button">Start New Session</button>
+    </aside>
+
+    <div id="startOverlay" class="start-overlay" hidden>
+      <div class="start-card">
+        <img class="avatar" src="/spidy.svg" alt="" aria-hidden="true" />
+        <h1>Talk to Spidy</h1>
+        <p>Spidy needs microphone access to hear you.</p>
+        <button id="startVoiceBtn" class="primary-btn" type="button">Enable Microphone</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

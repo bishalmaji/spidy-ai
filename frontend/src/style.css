@@ -1,0 +1,471 @@
+:root {
+  --bg: #0b0b12;
+  --panel: rgba(20, 20, 30, 0.85);
+  --text: #f2f1f6;
+  --muted: #9a97ab;
+  --accent-red: #eb4a5a;
+  --accent-blue: #5ac8e6;
+  --accent-purple: #be82f0;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+
+body {
+  height: 100dvh;
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  flex-direction: column;
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.28;
+}
+
+.glow-red {
+  background: var(--accent-red);
+  top: -20vmax;
+  right: -15vmax;
+}
+
+.glow-blue {
+  background: var(--accent-blue);
+  bottom: -25vmax;
+  left: -18vmax;
+}
+
+.web-bg {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity: 0.5;
+}
+
+.skyline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 18vh;
+  background: url('/skyline.svg') center bottom / cover no-repeat;
+  opacity: 0.25;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 28px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stage-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.mark {
+  width: 28px;
+  height: 28px;
+}
+
+.mark-name {
+  font-family: 'Bebas Neue', 'Outfit', sans-serif;
+  letter-spacing: 0.06em;
+  font-size: 1.1rem;
+  color: var(--muted);
+  flex: 1;
+}
+
+.login-link {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.login-link[hidden] {
+  display: none;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.orb-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 0;
+}
+
+.orb-button {
+  position: relative;
+  width: min(60vw, 260px);
+  height: min(60vw, 260px);
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.orb-button canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.orb-mark {
+  position: relative;
+  width: 34%;
+  height: 34%;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.4));
+}
+
+.status-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-align: center;
+  min-height: 1.2em;
+}
+
+.transcript {
+  width: 100%;
+  max-width: 480px;
+  min-height: 3.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.transcript.visible {
+  opacity: 1;
+}
+
+.line {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  max-width: 100%;
+}
+
+.line-user {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.line-ai {
+  color: var(--text);
+  background: rgba(235, 74, 90, 0.12);
+}
+
+.text-fallback-toggle {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.fallback-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+}
+
+/* An explicit `display` on the class beats the browser's built-in
+   [hidden] { display: none } rule (author CSS always outranks the UA
+   stylesheet), so toggling the `hidden` attribute alone would not hide
+   this element without a rule like this to win it back. */
+.fallback-form[hidden] {
+  display: none;
+}
+
+.fallback-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.fallback-form button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent-red);
+  color: white;
+  cursor: pointer;
+}
+
+.settings-panel {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  right: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
+  width: min(84vw, 300px);
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 24px 20px;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-panel.open {
+  transform: translateX(0);
+}
+
+.settings-panel h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.login-state {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.auth-section[hidden],
+.voice-choice[hidden] {
+  display: none;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.auth-form input[type='email'],
+.auth-form input[type='text'] {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.auth-extra[hidden],
+#authExtraFields[hidden] {
+  display: none;
+}
+
+#authExtraFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gender-choice {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gender-choice legend {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.gender-choice label {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.auth-error {
+  margin: 0;
+  color: var(--accent-red);
+  font-size: 0.8rem;
+}
+
+.auth-error[hidden] {
+  display: none;
+}
+
+.auth-submit {
+  margin-top: 0;
+  width: 100%;
+}
+
+.voice-choice {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voice-choice legend {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.voice-choice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.ghost-btn[hidden] {
+  display: none;
+}
+
+.start-overlay[hidden] {
+  display: none;
+}
+
+.start-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(6, 6, 10, 0.92);
+  padding: 20px;
+}
+
+.start-card {
+  text-align: center;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.start-card .avatar {
+  width: 72px;
+  height: 72px;
+}
+
+.start-card h1 {
+  margin: 0;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.04em;
+  font-size: 1.8rem;
+}
+
+.start-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.primary-btn {
+  margin-top: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+@media (min-width: 720px) {
+  .orb-button {
+    width: 300px;
+    height: 300px;
+  }
+}
