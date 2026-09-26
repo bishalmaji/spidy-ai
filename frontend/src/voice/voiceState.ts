@@ -27,7 +27,7 @@ export const STATUS_LABEL: Record<AppVoiceState, string> = {
   initializing: 'Just getting ready…',
   permission_required: 'माइक के लिए एक बार टैप करो',
   connecting: 'एक सेकंड, Connecting…',
-  idle: 'शुरू करें? बोलो…',
+  idle: 'click or press [space] to start',
   listening: 'हाँ, बोलो…',
   thinking: 'Hmm...Thinking',
   speaking: '.......',
