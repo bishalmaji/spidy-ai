@@ -6,13 +6,53 @@ import { SpidyVoice, SynthesizedAudio } from '../types';
 dotenv.config();
 
 const EDGE_TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+// Real Hindi neural voices (not English-India accented ones).
 const EDGE_VOICES: Record<SpidyVoice, string> = {
-  female: 'en-IN-NeerjaNeural',
-  male: 'en-IN-PrabhatNeural',
+  female: 'hi-IN-SwaraNeural',
+  male: 'hi-IN-MadhurNeural',
+};
+const SARVAM_SPEAKERS: Record<SpidyVoice, string> = {
+  female: 'meera',
+  male: 'shubh',
 };
 const CHROMIUM_FULL_VERSION = '143.0.3650.75';
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0';
+
+/**
+ * Strips everything that a TTS engine mispronounces or reads aloud literally:
+ * emojis, markdown emphasis/formatting characters, and quotation marks.
+ * Always run text through this before sending it to any voice provider.
+ */
+export function sanitizeForSpeech(text: string): string {
+  return text
+    // Fenced/inline code — drop fences, keep inline code content.
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]*)`/g, '$1')
+    // Markdown emphasis — keep the wrapped text, drop the markers.
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/~~([^~]+)~~/g, '$1')
+    // Markdown structure markers at line start.
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}>\s?/gm, '')
+    .replace(/^\s{0,3}[-*+]\s+/gm, '')
+    // Markdown links — keep the label, drop the URL.
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Any leftover/unbalanced formatting or bullet characters.
+    .replace(/[*_~`#•‣◦▪▫●○]/g, '')
+    // Quotation marks of every flavor (straight + curly + guillemets).
+    .replace(/["“”„‟❝❞«»‹›'‘’‛]/g, '')
+    // Emoji: pictographs, emoji-presentation symbols, variation selector,
+    // zero-width joiner, and the combining "enclosing keycap" mark.
+    .replace(/\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u200D\uFE0F\u20E3]/gu, '')
+    // Tidy up whitespace left behind by the removals above.
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 function generateSecMsGec(): string {
   const unix = Date.now() / 1000;
@@ -70,7 +110,7 @@ async function synthesizeWithEdge(text: string, voice: SpidyVoice): Promise<Synt
     `&Sec-MS-GEC-Version=1-${CHROMIUM_FULL_VERSION}`;
 
   const ssml =
-    `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-IN'>` +
+    `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='hi-IN'>` +
     `<voice name='${EDGE_VOICES[voice]}'>` +
     `<prosody rate='+4%'>${escapeXml(text)}</prosody>` +
     `</voice></speak>`;
@@ -163,8 +203,7 @@ async function synthesizeWithEdge(text: string, voice: SpidyVoice): Promise<Synt
   return { buffer: Buffer.concat(chunks), mimeType: 'audio/mpeg' };
 }
 
-function splitForGoogleTts(text: string): string[] {
-  const maxLen = 180;
+function splitText(text: string, maxLen: number): string[] {
   if (text.length <= maxLen) {
     return [text];
   }
@@ -172,7 +211,7 @@ function splitForGoogleTts(text: string): string[] {
   let remaining = text.trim();
   while (remaining.length > maxLen) {
     let cut = remaining.lastIndexOf(' ', maxLen);
-    if (cut < 40) {
+    if (cut < maxLen * 0.2) {
       cut = maxLen;
     }
     parts.push(remaining.slice(0, cut).trim());
@@ -185,11 +224,11 @@ function splitForGoogleTts(text: string): string[] {
 }
 
 async function synthesizeWithGoogle(text: string): Promise<SynthesizedAudio> {
-  const parts = splitForGoogleTts(text);
+  const parts = splitText(text, 180);
   const buffers: Buffer[] = [];
   for (const part of parts) {
     const url =
-      'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' +
+      'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&q=' +
       encodeURIComponent(part);
     const response = await fetch(url, {
       headers: {
@@ -210,11 +249,64 @@ async function synthesizeWithGoogle(text: string): Promise<SynthesizedAudio> {
   return { buffer: Buffer.concat(buffers), mimeType: 'audio/mpeg' };
 }
 
+/**
+ * Sarvam AI — an official, India-focused TTS API with real Hindi voices
+ * (not just Indian-accented English) and a genuine free tier (no card
+ * required to start: https://dashboard.sarvam.ai). Unlike the Edge/Google
+ * tricks above, this is a real API called with a key, so it isn't subject
+ * to the browser-impersonation blocks that cloud/datacenter IPs commonly
+ * hit — which is almost certainly why voice "works on local but not on
+ * the deployed server" today. Set SARVAM_API_KEY to use it.
+ */
+async function synthesizeWithSarvam(text: string, voice: SpidyVoice): Promise<SynthesizedAudio> {
+  const apiKey = process.env.SARVAM_API_KEY;
+  if (!apiKey) {
+    throw new Error('SARVAM_API_KEY is not set.');
+  }
+  const parts = splitText(text, 2000); // bulbul:v3 hard limit is 2500 chars/request
+  const buffers: Buffer[] = [];
+  for (const part of parts) {
+    const response = await fetch('https://api.sarvam.ai/text-to-speech/stream', {
+      method: 'POST',
+      headers: {
+        'api-subscription-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: part,
+        target_language_code: 'hi-IN',
+        speaker: SARVAM_SPEAKERS[voice],
+        model: 'bulbul:v3',
+        output_audio_codec: 'mp3',
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new Error(`Sarvam TTS failed (${response.status}): ${detail.slice(0, 200)}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength < 100) {
+      throw new Error('Sarvam TTS returned empty audio.');
+    }
+    buffers.push(Buffer.from(arrayBuffer));
+  }
+  return { buffer: Buffer.concat(buffers), mimeType: 'audio/mpeg' };
+}
+
 export async function synthesizeSpeech(text: string, voice: SpidyVoice = 'female'): Promise<SynthesizedAudio> {
-  const cleaned = text.trim();
+  const cleaned = sanitizeForSpeech(text.trim());
   if (!cleaned) {
     throw new Error('Cannot synthesize empty text.');
   }
+
+  if (process.env.SARVAM_API_KEY) {
+    try {
+      return await synthesizeWithSarvam(cleaned, voice);
+    } catch (sarvamError) {
+      console.warn('[tts] Sarvam TTS failed, falling back to Edge/Google:', sarvamError);
+    }
+  }
+
   try {
     return await synthesizeWithEdge(cleaned, voice);
   } catch (edgeError) {
