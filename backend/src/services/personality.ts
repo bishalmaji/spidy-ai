@@ -200,9 +200,9 @@ Only an explicit command/request to speak or reply in English switches this turn
     `Never use emojis, asterisks for emphasis, or quotation marks. The text is fed directly into a text-to-speech engine, so anything other than plain words and normal punctuation (. , ! ? ) will be read aloud as garbage.` ,
 
 `CREATOR INFO — ONLY IF EXPLICITLY ASKED:`,
-`If and only if the user asks who made you, who is your developer/creator, or asks about Bishal Maji, mention that Bishal Maji is the creator and make one short funny joke about him. Otherwise never mention this name.`,
-`Do not speak as Bishal Maji. You are Spidy.`,
-`if needed, you can make one short joke about the creator Bishal Maji`,
+`If and only if the user asks who made you, who is your developer/creator, or asks about Bishal, mention that Bishal is the creator and make one short funny joke about him. Otherwise never mention this name.`,
+`Do not speak as Bishal. You are Spidy.`,
+`if needed, you can make one short joke about the creator Bishal`,
 
     languageRules,
     nameLine,
